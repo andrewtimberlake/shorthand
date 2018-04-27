@@ -50,9 +50,9 @@ defmodule Shorthand do
   ## Example:
 
       iex> a = 1
-      iex> b = 2
-      iex> map(a, other: map(b))
-      %{a: 1, other: %{b: 2}}
+      iex> c = 2
+      iex> map(a, b: map(c), d: nil)
+      %{a: 1, b: %{c: 2}, d: nil}
 
   ## Example:
 
@@ -184,6 +184,9 @@ defmodule Shorthand do
 
     args
     |> Enum.map(fn
+      {name, value} ->
+        {map_key(name, type), value}
+
       {:^, context, [{name, context, nil}]} ->
         {map_key(name, type), {:^, context, [{name, context, nil}]}}
 
