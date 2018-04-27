@@ -24,9 +24,17 @@ defmodule Shorthand do
 
       config :shorthand,
         map: :m,
+        str_map: :sm,
         keywords: :k,
         build_struct: :s,
         variable_args: 10 # false to remove variable arguemnts
+
+  Then you can use them as:
+
+      m(a, _b, ^c) == %{a: a, b: _b, c: ^c}
+      sm(a, _b, ^c) == %{"a" => a, "b" => _b, "c" => ^c}
+      k(a, b, c) == [a: a, b: b, c: c]
+      s(Date, year, month, day) == %Date{year: year, month: month, day: day}
   """
 
   @doc ~S"""
@@ -55,10 +63,42 @@ defmodule Shorthand do
       iex> match?(map(^a), %{a: 2})
       false
   """
-  map_name = Application.get_env(:shorthand, :map, :m)
+  map_name = Application.get_env(:shorthand, :map, :map)
 
   defmacro unquote(map_name)([_ | _] = args) do
-    build_map(args)
+    build_map(args, :atom)
+  end
+
+  @doc ~S"""
+  Builds a map where the string keys and values have the same name
+
+  ## Example:
+
+      iex> a = 1
+      iex> b = 2
+      iex> str_map(a, b)
+      %{"a" => 1, "b" => 2}
+
+  ## Example:
+
+      iex> a = 1
+      iex> b = 2
+      iex> str_map(a, other: str_map(b))
+      %{"a" => 1, "other" => %{"b" => 2}}
+
+  ## Example:
+
+      iex> a = 1
+      iex> str_map(^a, _b, c) = %{"a" => 1, "b" => 3, "c" => 2}
+      iex> c
+      2
+      iex> match?(str_map(^a), %{"a" => 2})
+      false
+  """
+  str_map_name = Application.get_env(:shorthand, :str_map, :str_map)
+
+  defmacro unquote(str_map_name)([_ | _] = args) do
+    build_map(args, :string)
   end
 
   @doc ~S"""
@@ -71,8 +111,17 @@ defmodule Shorthand do
       iex> c = 3
       iex> keywords(a, b, c)
       [a: 1, b: 2, c: 3]
+
+  ## Examples
+
+      iex> c = 3
+      iex> keywords(a, _b, ^c) = [a: 1, b: 3, c: 3]
+      iex> a
+      1
+      iex> match?(keywords(^a), [a: 2])
+      false
   """
-  keywords_name = Application.get_env(:shorthand, :keywords, :k)
+  keywords_name = Application.get_env(:shorthand, :keywords, :keywords)
 
   defmacro unquote(keywords_name)([_ | _] = args) do
     build_keywords(args)
@@ -103,7 +152,11 @@ defmodule Shorthand do
       args = 1..i |> Enum.map(fn i -> {:"arg#{i}", [], nil} end)
 
       defmacro map(unquote_splicing(args)) do
-        build_map(unquote(args))
+        build_map(unquote(args), :atom)
+      end
+
+      defmacro str_map(unquote_splicing(args)) do
+        build_map(unquote(args), :string)
       end
 
       defmacro keywords(unquote_splicing(args)) do
@@ -116,41 +169,35 @@ defmodule Shorthand do
     end)
   end
 
-  defp build_map(args) do
-    # IO.inspect(args, label: "args")
-
-    map_args =
-      args
-      |> Enum.map(fn
-        {:^, context, [{name, context, nil}]} ->
-          {name, {:^, context, [{name, context, nil}]}}
-
-        {name, context, nil} ->
-          {variable_name(name), {name, context, nil}}
-
-        keyword_list when is_list(keyword_list) ->
-          keyword_list
-
-          # other ->
-          #   IO.inspect(other, label: "other")
-      end)
-      |> List.flatten()
-
-    {:%{}, [], map_args}
+  defp build_map(args, type) do
+    {:%{}, [], parse_args(args, type)}
   end
 
   defp build_keywords(args) do
+    quote do
+      unquote(parse_args(args, :atom))
+    end
+  end
+
+  defp parse_args(args, type) do
     # IO.inspect(args, label: "args")
 
-    keyword_list =
-      args
-      |> Enum.map(fn {name, context, nil} ->
-        {name, {name, context, nil}}
-      end)
+    args
+    |> Enum.map(fn
+      {:^, context, [{name, context, nil}]} ->
+        {map_key(name, type), {:^, context, [{name, context, nil}]}}
 
-    quote do
-      unquote(keyword_list)
-    end
+      {name, context, nil} ->
+        {map_key(variable_name(name), type), {name, context, nil}}
+
+      keyword_list when is_list(keyword_list) ->
+        keyword_list
+        |> Enum.map(fn {key, value} -> {map_key(key, type), value} end)
+
+        # other ->
+        #   IO.inspect(other, label: "other")
+    end)
+    |> List.flatten()
   end
 
   defp build_struct_from_list(module, args) do
@@ -158,6 +205,9 @@ defmodule Shorthand do
       struct(unquote(module), unquote(build_keywords(args)))
     end
   end
+
+  defp map_key(key, :atom) when is_atom(key), do: key
+  defp map_key(key, :string) when is_atom(key), do: to_string(key)
 
   defp variable_name(name) when is_atom(name), do: variable_name(Atom.to_string(name))
   defp variable_name(<<"_", name::binary>>), do: variable_name(name)
