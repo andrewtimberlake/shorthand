@@ -1,7 +1,7 @@
 defmodule Shorthand.MixProject do
   use Mix.Project
 
-  @version "0.0.1"
+  @version "0.0.2"
   @github_url "https://github.com/andrewtimberlake/shorthand"
 
   def project do
