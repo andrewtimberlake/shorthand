@@ -34,7 +34,7 @@ defmodule Shorthand do
       m(a, _b, ^c) == %{a: a, b: _b, c: ^c}
       sm(a, _b, ^c) == %{"a" => a, "b" => _b, "c" => ^c}
       k(a, b, c) == [a: a, b: b, c: c]
-      s(Date, year, month, day) == %Date{year: year, month: month, day: day}
+      s(MyStruct, name, age) == %MyStruct{name: name, age: age}
   """
 
   @doc ~S"""
@@ -132,11 +132,11 @@ defmodule Shorthand do
 
   ## Example:
 
-      iex> year = 2018
-      iex> month = 4
-      iex> day = 27
-      iex> build_struct(Date, year, month, day)
-      %Date{year: 2018, month: 4, day: 27}
+      iex> scheme = "https"
+      iex> host = "elixir-lang.org"
+      iex> path = "/docs.html"
+      iex> build_struct(URI, scheme, host, path)
+      %URI{scheme: "https", host: "elixir-lang.org", path: "/docs.html"}
   """
   struct_name = Application.get_env(:shorthand, :build_struct, :build_struct)
 
