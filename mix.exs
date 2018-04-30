@@ -40,6 +40,6 @@ defmodule Shorthand.MixProject do
   end
 
   defp deps do
-    [{:ex_doc, "~> 0.0", only: [:dev, :docs]}]
+    [{:ex_doc, "~> 0.0", only: [:docs]}]
   end
 end
