@@ -5,36 +5,66 @@ defmodule Shorthand do
   ## Examples:
   These examples use variable arguments (default is 10, see configuration below)
 
-  Instead of `%{one: one, two: two, three: three}`, you can type `map(one, two, three)`
+  Instead of `%{one: one, two: two, three: three}`, you can type `m(one, two, three)`
 
-  Instead of `my_func(one: one, two: two, three: three)`, you can type `my_func(keywords(one, two, three))`
+  Instead of `my_func(one: one, two: two, three: three)`, you can type `my_func(kw(one, two, three))`
 
-  Instead of `%MyStruct(one: one, two: two, three: three)`, you can type `bulid_struct(MyStruct, one, two, three)`
+  Instead of `%MyStruct(one: one, two: two, three: three)`, you can type `st(MyStruct, one, two, three)`
 
   ### Without variable arguemnts,
-  Instead of `%{one: one, two: two, three: three}`, you can type `map([one, two, three])`
+  Instead of `%{one: one, two: two, three: three}`, you can type `m([one, two, three])`
 
-  Instead of `my_func(one: one, two: two, three: three)`, you can type `my_func(keywords([one, two, three]))`
+  Instead of `my_func(one: one, two: two, three: three)`, you can type `my_func(kw([one, two, three]))`
 
   Instead of `%MyStruct(one: one, two: two, three: three)`, you can type `bulid_struct(MyStruct, [one, two, three])`
 
   ## Configuration
 
-  Because Shorthand is about convenience, the macros can be configured
+  For the convenience of `m(a, b, c, d, e, f, g, h, i, j)` instead of `m([a, b, c, d, e, f, g, h, i, j])` `Shorthand` generates multiple copies of each macro like m/1, m/2, m/3, …, m/10. You can configure how many of these "variable argument" macros are generated.
 
       config :shorthand,
-        map: :m,
-        str_map: :sm,
-        keywords: :k,
-        build_struct: :s,
         variable_args: 10 # false to remove variable arguemnts
 
-  Then you can use them as:
 
-      m(a, _b, ^c) == %{a: a, b: _b, c: ^c}
-      sm(a, _b, ^c) == %{"a" => a, "b" => _b, "c" => ^c}
-      k(a, b, c) == [a: a, b: b, c: c]
-      s(MyStruct, name, age) == %MyStruct{name: name, age: age}
+  ## Usage
+
+  You can import the `Shorthand` module and call each macro
+
+      defmodule MyModule do
+        import Shorthand
+
+        def my_func(m(a, b)) do
+          kw(a, b)
+        end
+      end
+
+  or you can require the module and prefix calls with the module name (example uses a module alias to keep the typing low
+
+      defmodule MyModule do
+        require Shorthand, as: S
+
+        def my_func(S.m(a, b)) do
+          S.kw(a, b)
+        end
+      end
+
+  ## Phoenix Examples
+      defmodule MyController do
+        # ...
+
+        def index(conn, sm(id)) do
+          model = Repo.get(MyModel, id)
+          # ...
+        end
+
+        def create(conn, sm(my_model: sm(first_name, last_name) = params)) do
+          changeset = MyModel.changeset(%MyModel{}, params) # params contains all form fields, not just first_name and last_name
+          # ...
+          conn
+          |> put_flash(:notice, "User \#{first_name} \#{last_name} was created successfully")
+          # ...
+        end
+      end
   """
 
   @doc ~S"""
@@ -44,28 +74,36 @@ defmodule Shorthand do
 
       iex> a = 1
       iex> b = 2
-      iex> map(a, b)
+      iex> m(a, b)
       %{a: 1, b: 2}
 
   ## Example:
 
       iex> a = 1
       iex> c = 2
-      iex> map(a, b: map(c), d: nil)
+      iex> m(a, b: m(c), d: nil)
       %{a: 1, b: %{c: 2}, d: nil}
 
   ## Example:
 
       iex> a = 1
-      iex> map(^a, _b, c) = %{a: 1, b: 3, c: 2}
+      iex> m(^a, _b, c) = %{a: 1, b: 3, c: 2}
       iex> c
       2
-      iex> match?(map(^a), %{a: 2})
+      iex> match?(m(^a), %{a: 2})
       false
-  """
-  map_name = Application.get_env(:shorthand, :map, :map)
 
-  defmacro unquote(map_name)([_ | _] = args) do
+  ## Example:
+
+      iex> m(model: m(a, b) = params) = %{model: %{a: 1, b: 2, c: 3, d: 4}}
+      iex> params
+      %{a: 1, b: 2, c: 3, d: 4}
+      iex> a
+      1
+      iex> b
+      2
+  """
+  defmacro m([_ | _] = args) do
     build_map(args, :atom)
   end
 
@@ -76,28 +114,36 @@ defmodule Shorthand do
 
       iex> a = 1
       iex> b = 2
-      iex> str_map(a, b)
+      iex> sm(a, b)
       %{"a" => 1, "b" => 2}
 
   ## Example:
 
       iex> a = 1
       iex> b = 2
-      iex> str_map(a, other: str_map(b))
+      iex> sm(a, other: sm(b))
       %{"a" => 1, "other" => %{"b" => 2}}
 
   ## Example:
 
       iex> a = 1
-      iex> str_map(^a, _b, c) = %{"a" => 1, "b" => 3, "c" => 2}
+      iex> sm(^a, _b, c) = %{"a" => 1, "b" => 3, "c" => 2}
       iex> c
       2
-      iex> match?(str_map(^a), %{"a" => 2})
+      iex> match?(sm(^a), %{"a" => 2})
       false
-  """
-  str_map_name = Application.get_env(:shorthand, :str_map, :str_map)
 
-  defmacro unquote(str_map_name)([_ | _] = args) do
+  ## Example:
+
+      iex> sm(model: sm(a, b) = params) = %{"model" => %{"a" => 1, "b" => 2, "c" => 3, "d" => 4}}
+      iex> params
+      %{"a" => 1, "b" => 2, "c" => 3, "d" => 4}
+      iex> a
+      1
+      iex> b
+      2
+  """
+  defmacro sm([_ | _] = args) do
     build_map(args, :string)
   end
 
@@ -109,21 +155,19 @@ defmodule Shorthand do
       iex> a = 1
       iex> b = 2
       iex> c = 3
-      iex> keywords(a, b, c)
+      iex> kw(a, b, c)
       [a: 1, b: 2, c: 3]
 
   ## Examples
 
       iex> c = 3
-      iex> keywords(a, _b, ^c) = [a: 1, b: 3, c: 3]
+      iex> kw(a, _b, ^c) = [a: 1, b: 3, c: 3]
       iex> a
       1
-      iex> match?(keywords(^a), [a: 2])
+      iex> match?(kw(^a), [a: 2])
       false
   """
-  keywords_name = Application.get_env(:shorthand, :keywords, :keywords)
-
-  defmacro unquote(keywords_name)([_ | _] = args) do
+  defmacro kw([_ | _] = args) do
     build_keywords(args)
   end
 
@@ -135,12 +179,10 @@ defmodule Shorthand do
       iex> scheme = "https"
       iex> host = "elixir-lang.org"
       iex> path = "/docs.html"
-      iex> build_struct(URI, scheme, host, path)
+      iex> st(URI, scheme, host, path)
       %URI{scheme: "https", host: "elixir-lang.org", path: "/docs.html"}
   """
-  struct_name = Application.get_env(:shorthand, :build_struct, :build_struct)
-
-  defmacro unquote(struct_name)(module, [_ | _] = args) do
+  defmacro st(module, [_ | _] = args) do
     build_struct_from_list(module, args)
   end
 
@@ -151,19 +193,19 @@ defmodule Shorthand do
     |> Enum.each(fn i ->
       args = 1..i |> Enum.map(fn i -> {:"arg#{i}", [], nil} end)
 
-      defmacro map(unquote_splicing(args)) do
+      defmacro m(unquote_splicing(args)) do
         build_map(unquote(args), :atom)
       end
 
-      defmacro str_map(unquote_splicing(args)) do
+      defmacro sm(unquote_splicing(args)) do
         build_map(unquote(args), :string)
       end
 
-      defmacro keywords(unquote_splicing(args)) do
+      defmacro kw(unquote_splicing(args)) do
         build_keywords(unquote(args))
       end
 
-      defmacro build_struct(module, unquote_splicing(args)) do
+      defmacro st(module, unquote_splicing(args)) do
         build_struct_from_list(module, unquote(args))
       end
     end)
