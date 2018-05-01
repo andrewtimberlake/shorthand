@@ -1,6 +1,6 @@
 # Shorthand
 
-Convenience macros to eliminate laborious typing. Provides macros for short map, string key'd map, keyword lists, and structs (ES6 like style)
+Convenience macros to eliminate laborious typing. Provides macros for short map, string keyed map, keyword lists, and structs (ES6 like style)
 
 ## Installation
 
