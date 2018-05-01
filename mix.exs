@@ -1,14 +1,16 @@
 defmodule Shorthand.MixProject do
   use Mix.Project
 
-  @version "0.0.2"
+  @version "0.0.3"
   @github_url "https://github.com/andrewtimberlake/shorthand"
 
   def project do
     [
       app: :shorthand,
       name: "Shorthand",
-      description: "Convenience macros to eliminate laborious typing",
+      description: """
+      Convenience macros to eliminate laborious typing. Provides macros for short map, string key'd map, keyword lists, and structs (ES6 like style)
+      """,
       license: "MIT",
       version: @version,
       elixir: "~> 1.3",

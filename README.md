@@ -1,6 +1,6 @@
 # Shorthand
 
-Convenience macros to eliminate laborious typing.
+Convenience macros to eliminate laborious typing. Provides macros for short map, string key'd map, keyword lists, and structs (ES6 like style)
 
 ## Installation
 
@@ -9,7 +9,7 @@ Add `shorthand` as a dependency in your project in your `mix.exs` file:
 ```elixir
 def deps do
   [
-    {:shorthand, "~> 0.0.2"}
+    {:shorthand, "~> 0.0.3"}
   ]
 end
 ```
