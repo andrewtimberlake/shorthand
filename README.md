@@ -1,4 +1,5 @@
 # Shorthand
+[![Build Status](https://travis-ci.org/andrewtimberlake/shorthand.svg?branch=master)](https://travis-ci.org/andrewtimberlake/shorthand)
 
 Convenience macros to eliminate laborious typing. Provides macros for short map, string keyed map, keyword lists, and structs (ES6 like style)
 
