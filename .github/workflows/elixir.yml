@@ -1,0 +1,62 @@
+name: Elixir CI
+
+on:
+  push:
+    branches: ['master']
+  pull_request:
+    branches: ['master']
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        include:
+          - elixir: 1.10.4
+            otp: 23.3.4.18
+            runs-on: ubuntu-18.04
+          - elixir: 1.11.4
+            otp: 24.3.4.7
+            runs-on: ubuntu-22.04
+          - elixir: 1.12.3
+            otp: 24.3.4.7
+            runs-on: ubuntu-22.04
+          - elixir: 1.13.4
+            otp: 25.2
+            runs-on: ubuntu-22.04
+          - elixir: 1.14.2
+            otp: 24.3.4.7
+            runs-on: ubuntu-22.04
+          - elixir: 1.14.2
+            otp: 25.2
+            runs-on: ubuntu-22.04
+
+    name: Build and test
+    runs-on: ${{ matrix.runs-on }}
+
+    env:
+      MIX_ENV: test
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: ${{ matrix.elixir }}
+          otp-version: ${{ matrix.otp }}
+      - name: Restore dependencies cache
+        uses: actions/cache@v3
+        with:
+          path: deps
+          key: ${{ runner.os }}-${{ matrix.otp }}-${{ matrix.elixir }}-mix-${{ hashFiles('**/mix.lock') }}
+          restore-keys: ${{ runner.os }}-${{ matrix.otp }}-${{ matrix.elixir }}-mix-
+      - name: mix-deps
+        if: steps.mix-cache.outputs.cache-hit != 'true'
+        run: |
+          mix local.rebar --force
+          mix local.hex --force
+          mix deps.get
+      - name: Run tests
+        run: mix test
