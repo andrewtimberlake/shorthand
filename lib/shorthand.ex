@@ -229,8 +229,8 @@ defmodule Shorthand do
       {name, value} ->
         {map_key(name, type), value}
 
-      {:^, context, [{name, context, nil}]} ->
-        {map_key(name, type), {:^, context, [{name, context, nil}]}}
+      {:^, context1, [{name, context2, nil}]} ->
+        {map_key(name, type), {:^, context1, [{name, context2, nil}]}}
 
       {name, context, nil} ->
         {map_key(variable_name(name), type), {name, context, nil}}
