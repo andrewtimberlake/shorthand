@@ -1,5 +1,6 @@
 # Shorthand
-[![Build Status](https://travis-ci.org/andrewtimberlake/shorthand.svg?branch=master)](https://travis-ci.org/andrewtimberlake/shorthand)
+
+![](https://github.com/andrewtimberlake/shorthand/actions/workflows/elixir.yml/badge.svg)
 
 Convenience macros to eliminate laborious typing. Provides macros for short map, string keyed map, keyword lists, and structs (ES6 like style)
 
@@ -10,7 +11,7 @@ Add `shorthand` as a dependency in your project in your `mix.exs` file:
 ```elixir
 def deps do
   [
-    {:shorthand, "~> 0.0.3"}
+    {:shorthand, "~> 1.0.0"}
   ]
 end
 ```
@@ -25,8 +26,8 @@ defmodule MyModule do
 
   defstruct name: nil, age: nil
 
-  def my_func(map(name, age, _height)) do
-    build_struct(MyModule, name, age)
+  def my_func(m(name, age, _height)) do
+    st(MyModule, name, age)
   end
 end
 ```

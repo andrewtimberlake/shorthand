@@ -1,7 +1,7 @@
 defmodule Shorthand.MixProject do
   use Mix.Project
 
-  @version "0.0.3"
+  @version "1.0.0"
   @github_url "https://github.com/andrewtimberlake/shorthand"
 
   def project do
@@ -42,6 +42,6 @@ defmodule Shorthand.MixProject do
   end
 
   defp deps do
-    [{:ex_doc, "~> 0.0", only: [:docs]}]
+    [{:ex_doc, ">= 0.0.0", only: :dev, runtime: false}]
   end
 end
