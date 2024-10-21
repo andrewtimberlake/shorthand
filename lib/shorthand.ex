@@ -186,7 +186,7 @@ defmodule Shorthand do
     build_struct_from_list(module, args)
   end
 
-  variable_args = Application.get_env(:shorthand, :variable_args, 10)
+  variable_args = Application.compile_env(:shorthand, :variable_args, 10)
 
   if variable_args do
     1..variable_args
