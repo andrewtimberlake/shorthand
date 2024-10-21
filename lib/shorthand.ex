@@ -164,8 +164,8 @@ defmodule Shorthand do
       iex> kw(a, _b, ^c) = [a: 1, b: 3, c: 3]
       iex> a
       1
-      iex> match?(kw(^a), [a: 2])
-      false
+      iex> match?(kw(^a), [a: 1])
+      true
   """
   defmacro kw([_ | _] = args) do
     build_keywords(args)
