@@ -40,6 +40,33 @@ defmodule ShorthandTest do
       assert m(a: nil) == %{a: nil}
       assert m(a: 1) == %{a: 1}
     end
+
+    test "with nested maps" do
+      assert m(a: m(b: 1)) == %{a: %{b: 1}}
+    end
+
+    test "with assigned map key" do
+      assert m(foo, m(b) = bar) = %{foo: :foo, bar: %{b: 1}}
+      assert foo == :foo
+      assert bar == %{b: 1}
+      assert b == 1
+    end
+
+    test "with assigned map key and other keys" do
+      assert m(foo, m(b) = bar, baz: bz) = %{foo: :foo, bar: %{b: 1}, baz: 3}
+      assert foo == :foo
+      assert bar == %{b: 1}
+      assert b == 1
+      assert bz == 3
+    end
+
+    test "with assigned map key and other keys (opposite way around)" do
+      assert m(foo, bar = m(b), baz: bz) = %{foo: :foo, bar: %{b: 1}, baz: 3}
+      assert foo == :foo
+      assert bar == %{b: 1}
+      assert b == 1
+      assert bz == 3
+    end
   end
 
   describe "sm" do

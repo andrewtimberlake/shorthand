@@ -102,6 +102,16 @@ defmodule Shorthand do
       1
       iex> b
       2
+
+  ## Example:
+
+      iex> m(m(a, b) = model) = %{model: %{a: 1, b: 2, c: 3, d: 4}}
+      iex> model
+      %{a: 1, b: 2, c: 3, d: 4}
+      iex> a
+      1
+      iex> b
+      2
   """
   defmacro m([_ | _] = args) do
     build_map(args, :atom)
@@ -137,6 +147,16 @@ defmodule Shorthand do
 
       iex> sm(model: sm(a, b) = params) = %{"model" => %{"a" => 1, "b" => 2, "c" => 3, "d" => 4}}
       iex> params
+      %{"a" => 1, "b" => 2, "c" => 3, "d" => 4}
+      iex> a
+      1
+      iex> b
+      2
+
+  ## Example:
+
+      iex> sm(sm(a, b) = model) = %{"model" => %{"a" => 1, "b" => 2, "c" => 3, "d" => 4}}
+      iex> model
       %{"a" => 1, "b" => 2, "c" => 3, "d" => 4}
       iex> a
       1
@@ -226,18 +246,30 @@ defmodule Shorthand do
 
     args
     |> Enum.map(fn
+      # m(a: 1, ...)
       {name, value} ->
         {map_key(name, type), value}
 
+      # m(^a)
       {:^, context1, [{name, context2, nil}]} ->
         {map_key(name, type), {:^, context1, [{name, context2, nil}]}}
 
+      # m(a)
       {name, context, nil} ->
         {map_key(variable_name(name), type), {name, context, nil}}
 
+      # m(a, b: m(c))
       keyword_list when is_list(keyword_list) ->
         keyword_list
         |> Enum.map(fn {key, value} -> {map_key(key, type), value} end)
+
+      # m(m(b) = bar)
+      {:=, context, [left, {name, _context2, nil} = right]} ->
+        [{map_key(name, type), {:=, context, [left, right]}}]
+
+      # m(bar = m(b))
+      {:=, context, [{name, _context2, nil} = left, right]} ->
+        [{map_key(name, type), {:=, context, [left, right]}}]
 
         # other ->
         #   IO.inspect(other, label: "other")
