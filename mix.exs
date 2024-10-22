@@ -13,7 +13,7 @@ defmodule Shorthand.MixProject do
       """,
       license: "MIT",
       version: @version,
-      elixir: "~> 1.3",
+      elixir: "~> 1.10",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       source_url: @github_url,
