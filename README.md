@@ -11,7 +11,7 @@ Add `shorthand` as a dependency in your project in your `mix.exs` file:
 ```elixir
 def deps do
   [
-    {:shorthand, "~> 1.0.0"}
+    {:shorthand, "~> 1.0"}
   ]
 end
 ```

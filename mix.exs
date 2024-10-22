@@ -1,7 +1,7 @@
 defmodule Shorthand.MixProject do
   use Mix.Project
 
-  @version "1.0.0"
+  @version "1.1.0"
   @github_url "https://github.com/andrewtimberlake/shorthand"
 
   def project do
@@ -19,7 +19,7 @@ defmodule Shorthand.MixProject do
       source_url: @github_url,
       docs: fn ->
         [
-          source_ref: "v#{@version}",
+          source_ref: @version,
           canonical: "https://hexdocs.pm/shorthand",
           main: "Shorthand",
           source_url: @github_url,
