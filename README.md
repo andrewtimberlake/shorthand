@@ -67,6 +67,10 @@ See the [docs](https://hexdocs.pm/shorthand) for more examples
 
 ## Structs
 
-| Shorthand                | Equivalent Elixir               |
-| ------------------------ | ------------------------------- |
-| `st(MyStruct, foo, bar)` | `%MyStruct{foo: foo, bar: bar}` |
+| Shorthand                                        | Equivalent Elixir                                                 |
+| ------------------------------------------------ | ----------------------------------------------------------------- |
+| `st(MyStruct, foo, bar)`                         | `%MyStruct{foo: foo, bar: bar}`                                   |
+| `st(MyStruct, foo, _bar, ^baz)`                  | `%MyStruct{foo: foo, bar: _bar, baz: ^baz}`                       |
+| `st(MyStruct, foo, bar, baz: st(MyStruct, qux))` | `%MyStruct{foo: foo, bar: bar, baz: %MyStruct{qux: qux}}`         |
+| `st(MyStruct, foo, m(baz) = bar, qux: m(quux))`  | `%MyStruct{foo: foo, bar: %{baz: baz} = bar, qux: %{quux: quux}}` |
+| `st(MyStruct, foo, bar = m(baz), qux: m(quux))`  | `%MyStruct{foo: foo, bar: %{baz: baz} = bar, qux: %{quux: quux}}` |
