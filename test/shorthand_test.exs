@@ -75,4 +75,69 @@ defmodule ShorthandTest do
       assert sm(a: 1) == %{"a" => 1}
     end
   end
+
+  describe "st" do
+    defmodule TestStruct do
+      defstruct a: 1, b: 2, foo: nil, bar: nil, baz: nil
+    end
+
+    test "with no argument" do
+      assert st(TestStruct) == %TestStruct{}
+    end
+
+    test "with a single keyword argument" do
+      assert st(TestStruct, a: nil) == %TestStruct{a: nil}
+      assert st(TestStruct, a: 1) == %TestStruct{a: 1}
+    end
+
+    test "with nested maps" do
+      assert st(TestStruct, a: st(TestStruct, b: 1)) == %TestStruct{a: %TestStruct{b: 1}}
+    end
+
+    test "with assigned map key" do
+      assert st(TestStruct, foo, st(TestStruct, b) = bar) = %TestStruct{
+               foo: :foo,
+               bar: %TestStruct{b: 1}
+             }
+
+      assert foo == :foo
+      assert bar == %TestStruct{b: 1}
+      assert b == 1
+    end
+
+    test "with assigned map key and other keys" do
+      assert st(TestStruct, foo, st(TestStruct, b) = bar, baz: bz) = %TestStruct{
+               foo: :foo,
+               bar: %TestStruct{b: 1},
+               baz: 3
+             }
+
+      assert foo == :foo
+      assert bar == %TestStruct{b: 1}
+      assert b == 1
+      assert bz == 3
+    end
+
+    test "with assigned map key and other keys (opposite way around)" do
+      assert st(TestStruct, foo, bar = st(TestStruct, b), baz: bz) = %TestStruct{
+               foo: :foo,
+               bar: %TestStruct{b: 1},
+               baz: 3
+             }
+
+      assert foo == :foo
+      assert bar == %TestStruct{b: 1}
+      assert b == 1
+      assert bz == 3
+    end
+
+    test "with matching" do
+      a = 4
+      foo = :bar
+      assert st(TestStruct, ^a, ^foo) = %TestStruct{a: 4, foo: :bar}
+      assert st(TestStruct, ^a, _b, ^foo) = %TestStruct{a: 4, foo: :bar}
+      assert st(TestStruct, ^a, _b, ^foo, baz: bz) = %TestStruct{a: 4, foo: :bar, baz: 42}
+      assert bz == 42
+    end
+  end
 end

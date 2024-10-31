@@ -202,8 +202,8 @@ defmodule Shorthand do
       iex> st(URI, scheme, host, path)
       %URI{scheme: "https", host: "elixir-lang.org", path: "/docs.html"}
   """
-  defmacro st(module, [_ | _] = args) do
-    build_struct_from_list(module, args)
+  defmacro st(module) do
+    {:%, [], [module, {:%{}, [], []}]}
   end
 
   variable_args = Application.compile_env(:shorthand, :variable_args, 10)
@@ -226,7 +226,8 @@ defmodule Shorthand do
       end
 
       defmacro st(module, unquote_splicing(args)) do
-        build_struct_from_list(module, unquote(args))
+        map = build_map(unquote(args), :atom)
+        {:%, [], [module, map]}
       end
     end)
   end
@@ -275,12 +276,6 @@ defmodule Shorthand do
         #   IO.inspect(other, label: "other")
     end)
     |> List.flatten()
-  end
-
-  defp build_struct_from_list(module, args) do
-    quote do
-      struct(unquote(module), unquote(build_keywords(args)))
-    end
   end
 
   defp map_key(key, :atom) when is_atom(key), do: key
