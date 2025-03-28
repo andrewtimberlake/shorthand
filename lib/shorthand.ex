@@ -11,7 +11,7 @@ defmodule Shorthand do
 
   Instead of `%MyStruct(one: one, two: two, three: three)`, you can type `st(MyStruct, one, two, three)`
 
-  ### Without variable arguemnts,
+  ### Without variable arguments,
   Instead of `%{one: one, two: two, three: three}`, you can type `m([one, two, three])`
 
   Instead of `my_func(one: one, two: two, three: three)`, you can type `my_func(kw([one, two, three]))`
