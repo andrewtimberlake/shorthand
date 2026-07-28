@@ -74,3 +74,43 @@ See the [docs](https://hexdocs.pm/shorthand) for more examples
 | `st(MyStruct, foo, bar, baz: st(MyStruct, qux))` | `%MyStruct{foo: foo, bar: bar, baz: %MyStruct{qux: qux}}`         |
 | `st(MyStruct, foo, m(baz) = bar, qux: m(quux))`  | `%MyStruct{foo: foo, bar: %{baz: baz} = bar, qux: %{quux: quux}}` |
 | `st(MyStruct, foo, bar = m(baz), qux: m(quux))`  | `%MyStruct{foo: foo, bar: %{baz: baz} = bar, qux: %{quux: quux}}` |
+
+# Configuration
+
+  For the convenience of `m(a, b, c, d, e, f, g, h, i, j)` instead of `m([a, b, c, d, e, f, g, h, i, j])` 
+  `Shorthand` generates multiple copies of each macro like m/1, m/2, m/3, …, m/10. 
+  You can configure how many of these "variable argument" macros are generated.
+
+      config :shorthand,
+        variable_args: 10 # false to remove variable arguemnts
+
+## Credo & Quokka integration
+
+Shorthand can flag and rewrite map literals automatically.
+
+### Credo
+
+Add the check to `.credo.exs`:
+
+```elixir
+{Shorthand.Check.Refactor.ShortenMaps, []}
+```
+
+Credo must be available in your project (directly or via another dependency).
+
+### Quokka
+
+Add the plugin to `.formatter.exs`:
+
+```elixir
+[
+  plugins: [Quokka],
+  quokka: [
+    plugins: [Shorthand.Quokka.ShortenMaps]
+  ]
+]
+```
+
+On `mix format`, shortenable maps are rewritten to `m(...)` / `sm(...)`, and
+`import Shorthand` is added to the module when needed. Structs are left unchanged
+(use `st/2` for those).

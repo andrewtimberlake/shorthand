@@ -1,7 +1,7 @@
 defmodule Shorthand.MixProject do
   use Mix.Project
 
-  @version "1.2.0"
+  @version "1.3.0"
   @github_url "https://github.com/andrewtimberlake/shorthand"
 
   def project do
@@ -20,28 +20,36 @@ defmodule Shorthand.MixProject do
       docs: fn ->
         [
           source_ref: @version,
-          canonical: "https://hexdocs.pm/shorthand",
+          canonical: "https://shorthand.hexdocs.pm",
           main: "Shorthand",
           source_url: @github_url,
-          extras: ["README.md"]
+          extras: ["README.md"],
+          groups_for_modules: [
+            Core: [Shorthand],
+            Credo: [Shorthand.Check.Refactor.ShortenMaps],
+            Quokka: [Shorthand.Quokka.ShortenMaps]
+          ]
         ]
       end,
       package: [
         maintainers: ["Andrew Timberlake"],
         contributors: ["Andrew Timberlake"],
         licenses: ["MIT"],
-        links: %{"GitHub" => @github_url}
+        links: %{"GitHub" => @github_url},
+        files: ~w(lib mix.exs README.md)
       ]
     ]
   end
 
   def application do
-    [
-      # extra_applications: [:logger]
-    ]
+    []
   end
 
   defp deps do
-    [{:ex_doc, ">= 0.0.0", only: :dev, runtime: false}]
+    [
+      {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
+      {:credo, "~> 1.7", optional: true, runtime: false},
+      {:quokka, "~> 2.6", optional: true, runtime: false}
+    ]
   end
 end
