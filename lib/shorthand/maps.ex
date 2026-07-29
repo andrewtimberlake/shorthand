@@ -112,15 +112,20 @@ defmodule Shorthand.Maps do
     end
   end
 
-  defp classify_value(kind, atom_key, {atom_key, _meta, _context} = value) do
+  # Variables are `{name, meta, context}` where context is nil or an atom.
+  # Calls are `{name, meta, args}` where args is a list — never shorthand.
+  defp classify_value(kind, atom_key, {atom_key, _meta, context} = value)
+       when is_atom(context) or is_nil(context) do
     {:matching, kind, value}
   end
 
-  defp classify_value(kind, atom_key, {:^, _meta, [{atom_key, _var_meta, _context}]} = value) do
+  defp classify_value(kind, atom_key, {:^, _meta, [{atom_key, _var_meta, context}]} = value)
+       when is_atom(context) or is_nil(context) do
     {:matching, kind, value}
   end
 
-  defp classify_value(kind, atom_key, {var, _meta, _context} = value) when is_atom(var) do
+  defp classify_value(kind, atom_key, {var, _meta, context} = value)
+       when is_atom(var) and (is_atom(context) or is_nil(context)) do
     if Atom.to_string(var) == "_#{atom_key}" do
       {:matching, kind, value}
     else

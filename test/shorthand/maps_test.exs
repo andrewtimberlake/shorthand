@@ -18,6 +18,16 @@ defmodule Shorthand.MapsTest do
       assert suggest(~S(%{"foo" => ^foo, "bar" => _bar})) == "sm(^foo, _bar)"
     end
 
+    test "keeps function calls as keyword values, not shorthand args" do
+      assert suggest("%{foo: foo, bar: bar()}") == "m(foo, bar: bar())"
+      assert suggest("%{foo: foo(), bar: bar()}") == nil
+
+      assert suggest(
+               "%{source: source, event_count: event_count, error_count: error_count, failure_percent: failure_percent(error_count, event_count)}"
+             ) ==
+               "m(source, event_count, error_count, failure_percent: failure_percent(error_count, event_count))"
+    end
+
     test "returns nil when nothing can be shortened" do
       assert suggest("%{}") == nil
       assert suggest("%{foo: :bar}") == nil
@@ -40,8 +50,21 @@ defmodule Shorthand.MapsTest do
       assert Macro.to_string(ast) == "sm(foo, bar: :baz)"
     end
 
+    test "does not treat function calls as matching variables" do
+      assert {:ok, ast} =
+               Maps.rewrite(
+                 ast(
+                   "%{source: source, error_count: error_count, failure_percent: failure_percent(error_count, event_count)}"
+                 )
+               )
+
+      assert Macro.to_string(ast) ==
+               "m(source, error_count, failure_percent: failure_percent(error_count, event_count))"
+    end
+
     test "returns error when nothing can be shortened" do
       assert Maps.rewrite(ast("%{foo: :bar}")) == :error
+      assert Maps.rewrite(ast("%{foo: foo()}")) == :error
       assert Maps.rewrite(ast(~S(%{"user-id" => id}))) == :error
     end
   end
