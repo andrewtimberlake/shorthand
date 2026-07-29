@@ -8,6 +8,8 @@ if Code.ensure_loaded?(Credo.Check) do
         {Shorthand.Check.Refactor.ShortenMaps, []}
 
     Pair with `Shorthand.Quokka.ShortenMaps` to auto-rewrite on `mix format`.
+
+    Structs and maps inside `quote` blocks are ignored.
     """
 
     use Credo.Check,
@@ -26,7 +28,8 @@ if Code.ensure_loaded?(Credo.Check) do
             m(foo, bar: :baz)
             sm(foo, bar: :baz)
 
-        Structs (`%Mod{}`) are ignored — use `st/2` for those.
+        Structs (`%Mod{}`) and maps inside `quote` blocks are ignored —
+        Shorthand macros cannot appear in quoted AST (use `st/2` for structs).
 
         ### Enable in `.credo.exs`:
 
@@ -52,6 +55,11 @@ if Code.ensure_loaded?(Credo.Check) do
     defp traverse({:%, meta, [name, {:%{}, map_meta, pairs}]}, issues, _issue_meta)
          when is_list(pairs) do
       {{:%, meta, [name, {:__block__, map_meta, pairs}]}, issues}
+    end
+
+    # Shorthand macros cannot appear inside quote — skip the quoted AST entirely.
+    defp traverse({:quote, meta, _args}, issues, _issue_meta) do
+      {{:quote, meta, []}, issues}
     end
 
     defp traverse({:%{}, meta, pairs} = ast, issues, issue_meta) when is_list(pairs) do

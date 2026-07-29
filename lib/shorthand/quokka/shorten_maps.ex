@@ -6,6 +6,9 @@ if Code.ensure_loaded?(Quokka.Plugin) do
     When a rewrite happens in a module that does not yet `import Shorthand`,
     the import is added automatically.
 
+    Structs and maps inside `quote` blocks are left unchanged — Shorthand
+    macros cannot appear in quoted AST.
+
     Enable in `.formatter.exs`:
 
         [
@@ -33,7 +36,7 @@ if Code.ensure_loaded?(Quokka.Plugin) do
     end
 
     def run({{:%{}, _meta, pairs}, _zipper_meta} = zipper, ctx) when is_list(pairs) do
-      if inside_struct?(zipper) do
+      if inside_struct?(zipper) or inside_quote?(zipper) do
         {:cont, zipper, ctx}
       else
         case Maps.rewrite(Zipper.node(zipper)) do
@@ -72,6 +75,9 @@ if Code.ensure_loaded?(Quokka.Plugin) do
       {rewritten, changed? or rewritten != node}
     end
 
+    # Shorthand macros cannot appear inside quote — leave quoted AST alone.
+    defp rewrite_ast({:quote, _, _} = node, changed?), do: {node, changed?}
+
     defp rewrite_ast({:%, meta, [name, {:%{}, map_meta, pairs}]}, changed?) when is_list(pairs) do
       {pairs, changed?} = rewrite_ast(pairs, changed?)
       {{:%, meta, [name, {:%{}, map_meta, pairs}]}, changed?}
@@ -108,6 +114,10 @@ if Code.ensure_loaded?(Quokka.Plugin) do
       {:defmodule, meta, [name, [{{:__block__, do_meta, [:do]}, insert_import(body)}]]}
     end
 
+    defp add_import({:defmodule, meta, [name, [{:do, body}]]}) do
+      {:defmodule, meta, [name, [do: insert_import(body)]]}
+    end
+
     defp insert_import({:__block__, meta, children}) when is_list(children) do
       {leading, rest} = Enum.split_while(children, &before_alias?/1)
       {:__block__, meta, leading ++ [import_ast() | rest]}
@@ -140,6 +150,14 @@ if Code.ensure_loaded?(Quokka.Plugin) do
       case Zipper.up(zipper) do
         {{:%, _, _}, _} -> true
         _ -> false
+      end
+    end
+
+    defp inside_quote?(zipper) do
+      case Zipper.up(zipper) do
+        nil -> false
+        {{:quote, _, _}, _} -> true
+        parent -> inside_quote?(parent)
       end
     end
   end
