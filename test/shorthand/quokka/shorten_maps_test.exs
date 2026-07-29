@@ -44,6 +44,28 @@ defmodule Shorthand.Quokka.ShortenMapsTest do
       end
     end
 
+    describe "nested modules" do
+      test "adds import to the outer module when only the nested module already imports" do
+        source = """
+        defmodule Example do
+          def child_spec(id) do
+            %{id: id, type: :worker}
+          end
+
+          defmodule Server do
+            import Shorthand
+            def init(root), do: {:ok, m(root)}
+          end
+        end
+        """
+
+        rewritten = Macro.to_string(rewrite(source))
+
+        assert rewritten =~ "m(id, type: :worker)"
+        assert rewritten =~ ~r/defmodule Example do\s+import Shorthand/
+      end
+    end
+
     defp rewrite(source) do
       zipper = source |> Code.string_to_quoted!() |> Zipper.zip()
       {:skip, zipper, _ctx} = ShortenMaps.run(zipper, %{})

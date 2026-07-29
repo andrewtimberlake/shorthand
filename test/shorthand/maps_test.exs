@@ -90,6 +90,30 @@ defmodule Shorthand.MapsTest do
 
       refute Maps.imports_shorthand?(ast(source))
     end
+
+    test "ignores import Shorthand in a nested module" do
+      source = """
+      defmodule Example do
+        def go(foo), do: %{foo: foo}
+
+        defmodule Child do
+          import Shorthand
+          def go(foo), do: m(foo)
+        end
+      end
+      """
+
+      refute Maps.imports_shorthand?(ast(source))
+
+      assert Maps.imports_shorthand?(
+               ast("""
+               defmodule Child do
+                 import Shorthand
+                 def go(foo), do: m(foo)
+               end
+               """)
+             )
+    end
   end
 
   defp ast(source), do: Code.string_to_quoted!(source)

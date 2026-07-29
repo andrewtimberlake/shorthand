@@ -54,19 +54,29 @@ defmodule Shorthand.Maps do
 
   def suggest(_), do: nil
 
-  @doc "True when the module AST already imports Shorthand."
-  def imports_shorthand?(ast) do
-    {_, imported?} =
-      Macro.prewalk(ast, false, fn
-        {:import, _, [{:__aliases__, _, [:Shorthand]} | _]}, _acc ->
-          {nil, true}
+  @doc """
+  True when the given module AST already imports Shorthand at the top level.
 
-        node, acc ->
-          {node, acc}
-      end)
-
-    imported?
+  Nested modules are ignored — an `import` inside `defmodule Child` does not
+  count for the parent module.
+  """
+  def imports_shorthand?({:defmodule, _, [_, [do_clause]]}) do
+    do_clause
+    |> module_body_statements()
+    |> Enum.any?(&shorthand_import?/1)
   end
+
+  def imports_shorthand?(_), do: false
+
+  defp module_body_statements({{:__block__, _, [:do]}, body}), do: flatten_statements(body)
+  defp module_body_statements({:do, body}), do: flatten_statements(body)
+  defp module_body_statements(other), do: flatten_statements(other)
+
+  defp flatten_statements({:__block__, _, children}) when is_list(children), do: children
+  defp flatten_statements(only), do: [only]
+
+  defp shorthand_import?({:import, _, [{:__aliases__, _, [:Shorthand]} | _]}), do: true
+  defp shorthand_import?(_), do: false
 
   defp classify_pairs(pairs)
        when is_integer(@max_shorthand_items) and length(pairs) > @max_shorthand_items,
