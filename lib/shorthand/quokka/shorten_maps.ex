@@ -120,11 +120,13 @@ if Code.ensure_loaded?(Quokka.Plugin) do
 
     defp insert_import({:__block__, meta, children}) when is_list(children) do
       {leading, rest} = Enum.split_while(children, &before_alias?/1)
+      leading = tighten_trailing_import_newlines(leading)
       {:__block__, meta, leading ++ [import_ast() | rest]}
     end
 
     defp insert_import(only_child) do
       if before_alias?(only_child) do
+        only_child = tighten_trailing_import_newlines([only_child]) |> hd()
         {:__block__, [], [only_child, import_ast()]}
       else
         {:__block__, [], [import_ast(), only_child]}
@@ -142,8 +144,29 @@ if Code.ensure_loaded?(Quokka.Plugin) do
     defp before_alias?({:@, _, [{:behaviour, _, _}]}), do: true
     defp before_alias?(_), do: false
 
+    # Plugins run after ModuleDirectives, so we must emit Quokka-style blank lines ourselves:
+    # newlines: 1 within a directive group, newlines: 2 between groups.
+    defp tighten_trailing_import_newlines(children) do
+      case Enum.split(children, -1) do
+        {front, [{:import, meta, args}]} ->
+          front ++ [{:import, put_newlines(meta, 1), args}]
+
+        _ ->
+          children
+      end
+    end
+
     defp import_ast do
-      {:import, [], [{:__aliases__, [], [:Shorthand]}]}
+      {:import, [end_of_expression: [newlines: 2]], [{:__aliases__, [], [:Shorthand]}]}
+    end
+
+    defp put_newlines(meta, newlines) do
+      Keyword.update(
+        meta,
+        :end_of_expression,
+        [newlines: newlines],
+        &Keyword.put(&1, :newlines, newlines)
+      )
     end
 
     defp inside_struct?(zipper) do

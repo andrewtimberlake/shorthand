@@ -66,6 +66,37 @@ defmodule Shorthand.Quokka.ShortenMapsTest do
       end
     end
 
+    describe "import formatting" do
+      test "inserts a blank line between import and following aliases" do
+        source = """
+        defmodule Example do
+          @moduledoc "docs"
+
+          alias Foo
+
+          def go(foo), do: %{foo: foo}
+        end
+        """
+
+        {ast, comments} = Quokka.string_to_ast(source, "test.ex")
+        Quokka.Config.set([])
+        {ast, comments} = Quokka.style({ast, comments}, "test.ex", [])
+
+        zipper = Zipper.zip(ast)
+
+        {:skip, zipper, _} =
+          ShortenMaps.run(zipper, %{comments: comments, file: "test.ex", plugin_opts: []})
+
+        formatted = Quokka.ast_to_string(Zipper.node(zipper), comments, [])
+
+        assert formatted =~ """
+                 import Shorthand
+
+                 alias Foo
+               """
+      end
+    end
+
     defp rewrite(source) do
       zipper = source |> Code.string_to_quoted!() |> Zipper.zip()
       {:skip, zipper, _ctx} = ShortenMaps.run(zipper, %{})
